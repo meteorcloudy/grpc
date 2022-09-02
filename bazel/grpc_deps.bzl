@@ -14,10 +14,10 @@
 """Load dependencies needed to compile and test the grpc library as a 3rd-party consumer."""
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@com_github_grpc_grpc//bazel:grpc_python_deps.bzl", "grpc_python_deps")
+load("//bazel:grpc_python_deps.bzl", "grpc_python_deps")
 
 # buildifier: disable=unnamed-macro
-def grpc_deps():
+def grpc_bind_deps():
     """Loads dependencies need to compile and test the grpc library."""
 
     native.bind(
@@ -195,6 +195,7 @@ def grpc_deps():
         actual = "@com_github_libuv_libuv//:libuv_test",
     )
 
+def grpc_repo_deps():
     if "boringssl" not in native.existing_rules():
         http_archive(
             name = "boringssl",
@@ -218,19 +219,6 @@ def grpc_deps():
                 "https://storage.googleapis.com/grpc-bazel-mirror/github.com/madler/zlib/archive/21767c654d31d2dccdde4330529775c6c5fd5389.tar.gz",
                 "https://github.com/madler/zlib/archive/21767c654d31d2dccdde4330529775c6c5fd5389.tar.gz",
             ],
-        )
-
-    if "com_google_protobuf" not in native.existing_rules():
-        http_archive(
-            name = "com_google_protobuf",
-            sha256 = "bab1685f92cc4ea5b6420026eef6c7973ae96fc21f4f1a3ee626dc6ca6d77c12",
-            strip_prefix = "protobuf-22d0e265de7d2b3d2e9a00d071313502e7d4cccf",
-            urls = [
-                "https://storage.googleapis.com/grpc-bazel-mirror/github.com/protocolbuffers/protobuf/archive/22d0e265de7d2b3d2e9a00d071313502e7d4cccf.tar.gz",
-                "https://github.com/protocolbuffers/protobuf/archive/22d0e265de7d2b3d2e9a00d071313502e7d4cccf.tar.gz",
-            ],
-            patches = ["@com_github_grpc_grpc//third_party:protobuf.patch"],
-            patch_args = ["-p1"],
         )
 
     if "com_google_googletest" not in native.existing_rules():
@@ -368,16 +356,6 @@ def grpc_deps():
             ],
         )
 
-    if "io_bazel_rules_go" not in native.existing_rules():
-        http_archive(
-            name = "io_bazel_rules_go",
-            sha256 = "69de5c704a05ff37862f7e0f5534d4f479418afc21806c887db544a316f3cb6b",
-            urls = [
-                "https://mirror.bazel.build/github.com/bazelbuild/rules_go/releases/download/v0.27.0/rules_go-v0.27.0.tar.gz",
-                "https://github.com/bazelbuild/rules_go/releases/download/v0.27.0/rules_go-v0.27.0.tar.gz",
-            ],
-        )
-
     if "build_bazel_rules_apple" not in native.existing_rules():
         http_archive(
             name = "build_bazel_rules_apple",
@@ -440,6 +418,8 @@ def grpc_deps():
                 "https://storage.googleapis.com/grpc-bazel-mirror/github.com/census-instrumentation/opencensus-proto/archive/v0.3.0.tar.gz",
                 "https://github.com/census-instrumentation/opencensus-proto/archive/v0.3.0.tar.gz",
             ],
+            patches = ["//third_party:opencensus-proto.patch"],
+            patch_args = ["-p2"],
         )
 
     if "com_envoyproxy_protoc_gen_validate" not in native.existing_rules():
@@ -465,7 +445,14 @@ def grpc_deps():
             ],
         )
 
+
+grpc_repo_deps_ext = module_extension(implementation = lambda ctx: grpc_repo_deps())
+
+def grpc_deps():
+    grpc_bind_deps()
+    grpc_repo_deps()
     grpc_python_deps()
+
 
 # TODO: move some dependencies from "grpc_deps" here?
 # buildifier: disable=unnamed-macro

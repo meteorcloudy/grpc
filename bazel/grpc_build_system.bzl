@@ -30,8 +30,6 @@ Contains macros used throughout the repo.
 load("//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("//bazel:copts.bzl", "GRPC_DEFAULT_COPTS")
 load("@upb//bazel:upb_proto_library.bzl", "upb_proto_library", "upb_proto_reflection_library")
-load("@build_bazel_rules_apple//apple:ios.bzl", "ios_unit_test")
-load("@build_bazel_rules_apple//apple/testing/default_runner:ios_test_runner.bzl", "ios_test_runner")
 
 # The set of pollers to test against if a test exercises polling
 POLLERS = ["epoll1", "poll"]
@@ -63,14 +61,14 @@ def _get_external_deps(external_deps):
         elif dep == "cares":
             ret += select({
                 "//:grpc_no_ares": [],
-                "//conditions:default": ["//external:cares"],
+                "//conditions:default": ["//third_party:cares"],
             })
         elif dep == "cronet_c_for_grpc":
             ret.append("//third_party/objective_c/Cronet:cronet_c_for_grpc")
         elif dep.startswith("absl/"):
             ret.append("@com_google_absl//" + dep)
         else:
-            ret.append("//external:" + dep)
+            ret.append("//third_party:" + dep)
     return ret
 
 def _update_visibility(visibility):
@@ -237,10 +235,6 @@ def ios_cc_test(
     test_lib_ios = name + "_test_lib_ios"
     ios_tags = tags + ["manual", "ios_cc_test"]
     test_runner = "ios_x86_64_sim_runner_" + name
-    ios_test_runner(
-        name = test_runner,
-        device_type = "iPhone X",
-    )
     if not any([t for t in tags if t.startswith("no_test_ios")]):
         native.objc_library(
             name = test_lib_ios,
@@ -253,15 +247,6 @@ def ios_cc_test(
             testonly = 1,
         )
         ios_test_deps = [":" + test_lib_ios]
-        ios_unit_test(
-            name = name + "_on_ios",
-            size = kwargs.get("size"),
-            data = kwargs.get("data"),
-            tags = ios_tags,
-            minimum_os_version = "9.0",
-            runner = test_runner,
-            deps = ios_test_deps,
-        )
 
 def expand_tests_for_each_poller_and_engine(name, srcs, deps, tags, args, exclude_pollers, uses_event_engine):
     """Common logic used to parameterize tests for every poller and EventEngine.
