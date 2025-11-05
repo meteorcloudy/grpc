@@ -45,15 +45,6 @@ bazel_dep(name = "zlib", version = "1.3.1.bcr.5")
 # Only for version bump
 bazel_dep(name = "cel-spec", version = "0.24.0", repo_name = None)
 bazel_dep(name = "protoc-gen-validate", version = "1.2.1.bcr.1", repo_name = "com_envoyproxy_protoc_gen_validate")  # Not needed directly
-local_path_override(
-    module_name = "protoc-gen-validate",
-    path = "../protoc-gen-validate",
-)
-
-local_path_override(
-    module_name = "envoy_api",
-    path = "../data-plane-api",
-)
 
 # Development dependencies
 # ========================
